@@ -1,0 +1,7 @@
+.turbo
+src
+*.json
+**/*.snap
+**/*.test.*
+**/test/**
+*.config.*
