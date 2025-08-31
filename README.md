@@ -1,36 +1,32 @@
-# Lega
+# Skywrite
 
-> <dfn>lega</dfn>, Italian for “alloy”, as in _lega tipografica_, the metal used in printmaking for forging movable type.
->
-> Also short for _legacy_.
-
-Lega is a CLI tool for forging npm package versions, primarily in monorepos. Inspired by [Changesets](https://github.com/changesets/changesets).
+Skywrite is a CLI tool for versioning and publishing npm packages to a registry, primarily in monorepos. Inspired by [Changesets](https://github.com/changesets/changesets).
 
 ```sh
-lega change
-lega version
-lega publish
+sw change
+sw version
+sw publish
 ```
 
 ## Setup
 
 > [!NOTE]
-> Lega assumes you’re managing a monorepo of packages with [pnpm workspaces](https://pnpm.io/workspaces). It requires pnpm commands to assess dependencies and workspace structure.
+> Skywrite assumes you’re managing a monorepo of packages with [pnpm workspaces](https://pnpm.io/workspaces). It requires pnpm commands to assess dependencies and workspace structure.
 
 With [pnpm](https://pnpm.io) installed, run:
 
 ```sh
-pnpm i -D lega
+pnpm i -D skywrite
 ```
 
-Lega uses your packages declared in [pnpm-workspace.yaml](https://pnpm.io/workspaces).
+Skywrite uses your [pnpm-workspace.yaml](https://pnpm.io/workspaces) settings to find packages. Non-pnpm setups aren’t currently supported.
 
 ## Commands
 
 ### change
 
 ```sh
-lega change
+sw change
         [--filter package1 --filter package2 ...]
         [--bump patch|minor|major]
         [--message "[Release notes]"]
@@ -41,7 +37,7 @@ Generate a changeset file. By default, will prompt for all questions, but these 
 ### version
 
 ```sh
-lega version
+sw version
         [--filter package1 --filter package2 ...]
 ```
 
@@ -53,21 +49,23 @@ Update all `package.json` versions according to the current changesets. It will 
 ### pre
 
 ```sh
-lega pre [tag]
+sw pre [tag]
         [--filter package1 --filter package2 ...]
         [--bump patch|minor|major] # default: patch
         [--dry-release]
 ```
 
-Build and release a prerelease for all packages at `[tag]`.
+Like `version` + `publish`, except for unstable prereleases. Requires a `[tag]`.
 
-For example, if you ran `lega pre beta`, it would make the following changes:
+For example, if you ran `sw pre beta`, it would version the following:
 
 - `pkg-a@1.0.0` → `pkg-a@1.0.1-beta.0`
 - `pkg-b@0.0.1-beta.0` → `pkg-b@0.0.1-beta.1`
 - `pkg-b@0.0.1` → `pkg-b@0.0.2-beta.0`
 
-The `tag` may be any arbitrary word other than [preset](#preset). Common tags are `beta`, `alpha`, or `next`. They are up to you!
+And the new packages would be published at `pnpm i pkg-a@beta pkg-b@beta`.
+
+The `[tag]` may be any arbitrary word other than [preset](#preset). Common tags are `beta`, `alpha`, or `next`. They are up to you!
 
 #### presets
 
@@ -84,21 +82,21 @@ Simply show what the changes would be, without releasing.
 
 #### Difference from Changesets
 
-If you’ve used [Changesets’ prereleases](https://github.com/changesets/changesets/blob/main/docs/prereleases.md), this works _very_ differently. Lega is meant to encourage frequent prerelease habits off your `main` branch, rather than longrunning feature branches, while preventing simple mistakes. At a high level:
+If you’ve used [Changesets’ prereleases](https://github.com/changesets/changesets/blob/main/docs/prereleases.md), this works _very_ differently. Skywrite is meant to encourage frequent prerelease habits off your `main` branch, rather than longrunning feature branches, while preventing simple mistakes. In more detail:
 
-- `lega pre [tag]` automatically builds and releases for all packages without a prompt (`--filter [package]` may be used).
+- `sw pre [tag]` automatically versions and releases all packages without a prompt (`--filter [package]` may be used).
   - This assumes you are **not** tracking prereleases in Git in longrunning branches, rather, you are prereleasing off your `main` trunk more frequently.
 - Lega uses the current package versions + tag, and automatically figures out the next `[increment]` number based on npm.
   - `[increment]` will always increment by `1` unless using a [preset](#preset).
 - There is no `pre enter` / `pre exit` context (⚠️ `pre enter` would set `enter` as the tag!).
-  - You can ony prerelease through `lega pre`.
-  - You can only create stable versions through `lega publish`. There is no overlap.
+  - You can ony prerelease through `sw pre`.
+  - You can only create stable versions through `sw version` + `sw publish`. There is no overlap.
   - Thus, you are never accidentally in the wrong context. There is no `pre.json` file that may accidentally missing in some CI contexts.
 
 ### init
 
 ```sh
-lega init
+skywrite init
 ```
 
 Creates a `lega.config.yml` file with the default settings.
@@ -109,10 +107,10 @@ The `--filter [glob]` flag skips the prompt, and automatically operates on only 
 
 ## Config
 
-Lega requires a `.changeset/lega.config.ts` file in the monorepo root.
+Skywrite requires a `.changeset/lega.config.ts` file in the monorepo root.
 
 ```ts
-import { defineConfig, templates } from "lega";
+import { defineConfig, templates } from "skywrite";
 
 export default defineConfig({
   ignorePackages: [
@@ -146,11 +144,11 @@ export default defineConfig({
 
 ## Comparison to Changesets
 
-This mostly differs in automatic version strategy, and [fixing longstanding versioning bugs in Changesets](https://github.com/changesets/changesets/issues/1011) that have never been addressed. In larger monorepos this makes Changesets unusable.
+Skywrite mostly differs in a different versioning strategy. Where Changesets defends their choices to have “smarter” versioning, it results in [frequent unexpected major bumps](https://github.com/changesets/changesets/issues/1011) that can’t be opted out of. Skywrite proudly has “dumber” versioning that explicitly follows your commands.
 
-Lega follows the same philosophy as Changesets and a similar API, but more strictly enforces version bumps. You’ll **never get an accidental major version bump when requesting a minor version.**
+The other major difference is Skywrite has automatic publish checks, which will fail if a build does not meet certain criteria. This it’s harder to publish a bad package build.
 
-Beyond that, there are a few quality of life improvements such as [`lega pre`](#pre) that makes nightly or beta releases much simpler.
+Other than that, Skywrite shares the changelog philosophy and workflow of Changesets, and follows very similar APIs. It is meant to be a drop-in replacement for Changesets but with minor command tweaks.
 
 ## Acknowledgments
 
