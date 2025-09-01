@@ -1,47 +1,48 @@
-# Recut
+# Verdi
 
-Recut is a CLI tool for versioning and publishing npm packages to a registry, primarily in monorepos. Inspired by [Changesets](https://github.com/changesets/changesets).
-
-```sh
-sw change
-sw version
-sw publish
-```
+Verdi is a CLI helper for versioning and publishing multiple npm packages from one monorepos. Inspired by [Changesets](https://github.com/changesets/changesets).
 
 ## Setup
 
 > [!NOTE]
-> Recut currently only works with [pnpm workspaces](https://pnpm.io/workspaces).
+> Verdi currently only works with [pnpm workspaces](https://pnpm.io/workspaces).
 
 With [pnpm](https://pnpm.io) installed, run:
 
 ```sh
-pnpm i -D recut
+pnpm i -D verdi
 ```
 
-Recut uses your [pnpm-workspace.yaml](https://pnpm.io/workspaces) settings to understand your monorepo structure.
+Verdi uses your [pnpm-workspace.yaml](https://pnpm.io/workspaces) settings to understand your monorepo structure.
 
 ## Commands
 
 ### change
 
 ```sh
-recut change
+verdi change
         [--filter package1 --filter package2 ...]
         [--bump patch|minor|major]
         [--message "[Release notes]"]
 ```
 
-Generate a changeset file. By default, will prompt for all questions, but these may be bypassed with individual flags.
+Generate a changeset file. By default it will prompt for input, but these may be bypassed with individual flags.
+
+#### semver
+
+Verdi follows standard semantic versioning, but with a few more modern assumptions:
+
+- Packages on 0.x use minor for breaking, patch for everything else
+- Packages >= 1.0 follow standard major breaking, minor feature, patch bugfix
 
 ### version
 
 ```sh
-recut version
+verdi version
         [--filter package1 --filter package2 ...]
 ```
 
-Update all `package.json` versions according to the current changesets. It will run the `command` option in [config](#config).
+Cut new versions and update `package.json`s according to the current changesets. It will run the `command` option in [config](#config).
 
 > [!TIP]
 > Need to run a command in all packages? Try `pnpm -r run [command]` ([docs](https://pnpm.io/cli/recursive)) for simple cases, or [Turborepo](https://turborepo.com/) for more advanced setups.
@@ -49,7 +50,7 @@ Update all `package.json` versions according to the current changesets. It will 
 ### pre
 
 ```sh
-recut pre [tag]
+verdi pre [tag]
         [--filter package1 --filter package2 ...]
         [--bump patch|minor|major] # default: patch
         [--dry-release]
@@ -57,7 +58,7 @@ recut pre [tag]
 
 Like `version` + `publish`, except for unstable prereleases. Requires a `[tag]`.
 
-For example, if you ran `sw pre beta`, it would version the following:
+For example, if you ran `verdi pre beta`, it would version the following:
 
 - `pkg-a@1.0.0` → `pkg-a@1.0.1-beta.0`
 - `pkg-b@0.0.1-beta.0` → `pkg-b@0.0.1-beta.1`
@@ -82,35 +83,16 @@ Show what the changes would be, without releasing.
 
 #### Difference from Changesets
 
-If you’ve used [Changesets’ prereleases](https://github.com/changesets/changesets/blob/main/docs/prereleases.md), this works differently. Recut is meant to encourage frequent prereleases off your `main` branch, rather than longrunning feature branches, while preventing simple mistakes. In more detail:
+If you’ve used [Changesets’ prereleases](https://github.com/changesets/changesets/blob/main/docs/prereleases.md), this works differently. Verdi discourages working off of a main trunk for too long by making prereleases simple and effective. 
 
-- `sw pre [tag]` automatically versions and releases all packages without a prompt (`--filter [package]` may be used).
-  - This assumes you are **not** tracking prereleases in Git in longrunning branches, rather, you are prereleasing off your `main` trunk more frequently.
-- Recut uses the current package versions + tag, and automatically figures out the next `[increment]` number based on npm.
-  - `[increment]` will always increment by `1` unless using a [preset](#preset).
-- There is no `pre enter` / `pre exit` context (⚠️ `pre enter` would set `enter` as the tag!).
-  - You can ony prerelease through `sw pre`.
-  - You can only create stable versions through `sw version` + `sw publish`. There is no overlap.
-  - Thus, you are never accidentally in the wrong context. There is no `pre.json` file that may accidentally missing in some CI contexts.
-
-### init
-
-```sh
-recut init
-```
-
-Creates a `recut.config.yml` file with the default settings.
-
-### --filter
-
-The `--filter [glob]` flag skips the prompt, and automatically operates on only the package(s) specified. You can specify either a
+`verdi pre [tag]` automatically versions and releases all packages without a prompt (`--filter [package]` may be used if only some packages should get a prerelease).
 
 ## Config
 
-Recut requires a `.changeset/lega.config.ts` file in the monorepo root.
+Verdi requires a `verdi.config.ts` file in the monorepo root.
 
 ```ts
-import { defineConfig, templates } from "recut";
+import { defineConfig, templates } from "verdi";
 
 export default defineConfig({
   ignorePackages: [
@@ -144,11 +126,9 @@ export default defineConfig({
 
 ## Comparison to Changesets
 
-Recut mostly differs in a different versioning strategy. Where Changesets defends their choices to have “smarter” versioning, it results in [frequent unexpected major bumps](https://github.com/changesets/changesets/issues/1011) that are untenable in large monorepos. Skywrite proudly has “dumber” versioning that explicitly follows your commands. No unexpected behavior leads to fewer permanent mistakes.
+Verdi mostly differs in a different versioning strategy. Where Changesets defends their choices to have “smarter” versioning, it results in [frequent unexpected major bumps](https://github.com/changesets/changesets/issues/1011) that are untenable in large monorepos. Verdi applies more guardrails and best practices in exchange for safer publishing. No unexpected behavior leads to fewer permanent mistakes.
 
-The other major difference is Skywrite has automatic publish checks, which will fail if a build does not meet certain criteria. Fewer mistakes also lead to fewer permanent mistakes.
-
-Otherwise, Recut shares the philosophy and workflow of Changesets with human-authored changelogs, and shares identical APIs whenever possible. It is meant to be a drop-in replacement for Changesets but with easier usage.
+The other major difference is Verdi has automatic publish checks, which will fail if a build does not meet certain criteria. Fewer mistakes also lead to fewer permanent mistakes.
 
 ## Acknowledgments
 
