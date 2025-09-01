@@ -1,5 +1,5 @@
 {
-  "name": "lega",
+  "name": "vervo",
   "version": "0.0.0",
   "description": "Simple package versioning",
   "keywords": [
@@ -11,22 +11,27 @@
     "publish",
     "changesets"
   ],
+  "main": "./dist/index.js",
   "type": "module",
   "author": {
     "name": "Drew Powers",
     "email": "drew@pow.rs"
   },
+  "packageManager": "pnpm@10.15.0",
   "scripts": {
     "build": "rolldown -c && attw --profile esm-only --pack .",
     "lint": "biome check .",
     "test": "vitest run"
   },
   "dependencies": {
+    "@bomb.sh/args": "^0.3.1",
+    "@clack/prompts": "^0.11.0",
     "dotenv": "^17.2.1"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
     "@biomejs/biome": "^2.2.2",
+    "@types/node": "^24.3.0",
     "rolldown": "1.0.0-beta.34",
     "rolldown-plugin-dts": "^0.15.10",
     "vitest": "^3.2.4"

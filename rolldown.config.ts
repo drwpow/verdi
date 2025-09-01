@@ -5,9 +5,9 @@ export default defineConfig({
   input: {
     index: "./src/index.ts",
   },
-  platform: "browser",
+  platform: "node",
   plugins: [dts()],
-  external: [],
+  external: ["@clack/prompts", "@bomb.sh/args"],
   output: {
     dir: "dist",
     format: "es",
